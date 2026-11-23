@@ -1,10 +1,11 @@
 # Phishing Detector on Azure
 
-Terraform that deploys a Flask phishing-detection web app on Azure: an Application Gateway in front of two Ubuntu VMs in separate availability zones, backed by a private PostgreSQL database.
+A Flask phishing-detection web app on Azure, deployed via Terraform
+An Application Gateway in front of two VMs in separate availability zones, backed by a private PostgreSQL database.
 
 ![Architecture](architecture.svg)
 
-## What it deploys
+## Architecture
 
 - **Network:** one VNet (`10.0.0.0/16`) with gateway, app and database subnets. NSGs let the app subnet accept only port 8000 from the gateway, and the database subnet only port 5432 from the app subnet.
 - **Application Gateway** (Standard_v2): the only public entry point. HTTP on port 80, health probe on `/health`.
