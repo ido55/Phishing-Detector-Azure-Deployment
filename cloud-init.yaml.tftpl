@@ -1,0 +1,77 @@
+#cloud-config
+# Runs once, on each VM's first boot: installs the app from the storage account and runs it with gunicorn on :8000.
+package_update: true
+packages:
+  - python3-venv
+
+write_files:
+  - path: /etc/phishing-detector/app.env
+    permissions: "0600"
+    content: |
+      DATABASE_URL="${database_url}"
+      INSTANCE_ID="${instance_id}"
+      AVAILABILITY_ZONE="zone ${availability_zone}"
+
+  - path: /usr/local/bin/deploy-phishing-detector
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Downloads the app package with the VM's managed identity, installs it and starts the service.
+      # Safe to run again (for example through Run Command) to pick up a new version of the zip.
+      set -euo pipefail
+
+      APP_DIR=/opt/phishing-detector
+      BLOB_URL="${app_blob_url}"
+      TOKEN_URL="http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/&client_id=${identity_client_id}"
+      WORK_DIR=$(mktemp -d)
+      trap 'rm -rf "$WORK_DIR"' EXIT
+
+      download() {
+        local token
+        token=$(curl -sSf -H Metadata:true "$TOKEN_URL" | python3 -c 'import json, sys; print(json.load(sys.stdin)["access_token"])') || return 1
+        curl -sSf -H "Authorization: Bearer $token" -H "x-ms-version: 2021-08-06" -o "$WORK_DIR/app.zip" "$BLOB_URL"
+      }
+
+      # A new role assignment can take a few minutes to take effect, so retry for up to 10 minutes.
+      for attempt in $(seq 1 30); do
+        if download; then break; fi
+        if [ "$attempt" -eq 30 ]; then echo "Could not download $BLOB_URL" >&2; exit 1; fi
+        echo "Download attempt $attempt failed, retrying in 20 s" >&2
+        sleep 20
+      done
+
+      python3 -m zipfile -e "$WORK_DIR/app.zip" "$WORK_DIR/unzipped"
+      # Use the folder that holds app.py, whether or not the zip wraps everything in a top-level folder.
+      APP_PY=$(find "$WORK_DIR/unzipped" -name app.py -print -quit)
+      if [ -z "$APP_PY" ]; then echo "app.py not found in the package" >&2; exit 1; fi
+      mkdir -p "$APP_DIR"
+      cp -r "$(dirname "$APP_PY")"/. "$APP_DIR"/
+
+      [ -x "$APP_DIR/venv/bin/pip" ] || python3 -m venv "$APP_DIR/venv"
+      "$APP_DIR/venv/bin/pip" install --quiet --no-cache-dir -r "$APP_DIR/requirements.txt"
+
+      systemctl daemon-reload
+      systemctl enable phishing-detector.service
+      systemctl restart phishing-detector.service
+
+  - path: /etc/systemd/system/phishing-detector.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Phishing detector (gunicorn + Flask)
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      DynamicUser=yes
+      EnvironmentFile=/etc/phishing-detector/app.env
+      WorkingDirectory=/opt/phishing-detector
+      ExecStart=/opt/phishing-detector/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8000 --access-logfile - app:app
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - /usr/local/bin/deploy-phishing-detector

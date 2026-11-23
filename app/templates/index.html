@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Scan an email</h2>
+<p class="muted">Upload a raw email (<code>.eml</code>, or "Show original" / "View source" saved as text) or paste it below.
+  Including the headers enables the sender checks.</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="{{ url_for('scan') }}" enctype="multipart/form-data">
+  <label for="email_file">Email file</label>
+  <input type="file" id="email_file" name="email_file" accept=".eml,.txt,message/rfc822,text/plain">
+  <label for="email_text">...or paste the email content</label>
+  <textarea id="email_text" name="email_text" rows="14" placeholder="From: ...&#10;Subject: ...&#10;&#10;Dear customer, ..."></textarea>
+  <button type="submit">Scan</button>
+</form>
+{% endblock %}

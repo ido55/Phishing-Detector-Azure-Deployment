@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Scan history</h2>
+{% if scans %}
+<table>
+  <tr><th>#</th><th>Time (UTC)</th><th>From</th><th>Subject</th><th>Verdict</th><th>Instance</th></tr>
+  {% for s in scans %}
+  <tr>
+    <td><a href="{{ url_for('result', scan_id=s.id) }}">{{ s.id }}</a></td>
+    <td>{{ s.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+    <td>{{ s.sender or "-" }}</td>
+    <td>{{ s.subject or "-" }}</td>
+    <td><span class="badge {{ s.verdict }}">{{ labels[s.verdict] }} ({{ s.score }})</span></td>
+    <td class="muted">{{ s.instance_id }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No scans yet. <a href="{{ url_for('index') }}">Scan your first email.</a></p>
+{% endif %}
+{% endblock %}

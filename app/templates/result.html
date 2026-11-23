@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Scan #{{ scan.id }}</h2>
+<p class="verdict {{ scan.verdict }}">{{ labels[scan.verdict] }} &mdash; risk score {{ scan.score }}/100</p>
+<table>
+  <tr><th>File</th><td>{{ scan.filename }}</td></tr>
+  <tr><th>From</th><td>{{ scan.sender or "(unknown)" }}</td></tr>
+  <tr><th>Subject</th><td>{{ scan.subject or "(none)" }}</td></tr>
+  <tr><th>Scanned</th><td>{{ scan.created_at.strftime("%Y-%m-%d %H:%M:%S") }} UTC on {{ scan.instance_id }}</td></tr>
+</table>
+
+<h3>Indicators</h3>
+{% if scan.findings %}
+<table>
+  <tr><th>Points</th><th>Category</th><th>Detail</th></tr>
+  {% for f in scan.findings %}
+  <tr><td>+{{ f.weight }}</td><td>{{ f.category }}</td><td>{{ f.detail }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No phishing indicators found.</p>
+{% endif %}
+<p><a href="{{ url_for('index') }}">Scan another email</a></p>
+{% endblock %}

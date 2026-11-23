@@ -1,0 +1,6 @@
+# Known-bad domains (one per line). In a real deployment this would be fed from a
+# threat-intel source such as PhishTank / OpenPhish / URLhaus.
+secure-login-update.com
+account-verify-center.net
+paypal-resolution-center.xyz
+free-giftcards.top

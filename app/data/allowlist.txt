@@ -1,0 +1,40 @@
+# Legitimate domains. Links to these (and their subdomains) are trusted, and
+# look-alikes of them (paypa1.com, paypal-secure.xyz, ...) are flagged.
+# The same brand's country domains (amazon.co.uk, paypal.de) are trusted too.
+amazon.com
+apple.com
+icloud.com
+microsoft.com
+microsoftonline.com
+office.com
+office365.com
+outlook.com
+live.com
+sharepoint.com
+google.com
+gmail.com
+googlemail.com
+youtube.com
+paypal.com
+netflix.com
+linkedin.com
+facebook.com
+instagram.com
+whatsapp.com
+github.com
+dropbox.com
+docusign.com
+docusign.net
+adobe.com
+wetransfer.com
+zoom.us
+dhl.com
+fedex.com
+usps.com
+ebay.com
+coinbase.com
+binance.com
+americanexpress.com
+chase.com
+wellsfargo.com
+bankofamerica.com
